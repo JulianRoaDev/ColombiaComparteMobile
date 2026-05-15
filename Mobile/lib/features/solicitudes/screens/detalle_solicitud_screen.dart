@@ -11,8 +11,8 @@ class DetalleSolicitudScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider   = context.watch<SolicitudesProvider>();
-    final solicitud  = provider.seleccionada;
+    final provider = context.watch<SolicitudesProvider>();
+    final solicitud = provider.seleccionada;
 
     if (solicitud == null) {
       return Scaffold(
@@ -24,6 +24,10 @@ class DetalleSolicitudScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detalle de Solicitud'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/solicitudes'),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_outline, color: Colors.red),
@@ -31,7 +35,8 @@ class DetalleSolicitudScreen extends StatelessWidget {
               final ok = await showConfirmDialog(
                 context,
                 title: 'Eliminar solicitud',
-                content: '¿Eliminar la solicitud de ${solicitud.nombre}? Esta acción no se puede deshacer.',
+                content:
+                    '¿Eliminar la solicitud de ${solicitud.nombre}? Esta acción no se puede deshacer.',
               );
               if (ok && context.mounted) {
                 final eliminado = await provider.eliminar(solicitud.id);
@@ -56,24 +61,30 @@ class DetalleSolicitudScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(solicitud.nombre,
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    style: const TextStyle(
+                        fontSize: 20, fontWeight: FontWeight.bold)),
                 EstadoChip(estado: solicitud.estado),
               ],
             ),
             const SizedBox(height: 20),
 
             // Datos
-            _Campo(label: 'Correo',    value: solicitud.correo),
-            _Campo(label: 'Teléfono',  value: solicitud.telefono),
+            _Campo(label: 'Correo', value: solicitud.correo),
+            _Campo(label: 'Teléfono', value: solicitud.telefono),
             _Campo(label: 'Finalidad', value: solicitud.finalidad),
-            _Campo(label: 'País',      value: solicitud.pais.nombre),
-            _Campo(label: 'Fecha',
-                value: '${solicitud.fechaCreacion.day}/${solicitud.fechaCreacion.month}/${solicitud.fechaCreacion.year}'),
+            _Campo(label: 'País', value: solicitud.pais.nombre),
+            _Campo(
+                label: 'Fecha',
+                value:
+                    '${solicitud.fechaCreacion.day}/${solicitud.fechaCreacion.month}/${solicitud.fechaCreacion.year}'),
             const SizedBox(height: 28),
 
             // Cambiar estado
             Text('Cambiar estado',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             Row(
               children: ['pendiente', 'gestionada', 'respondida'].map((e) {
@@ -87,7 +98,8 @@ class DetalleSolicitudScreen extends StatelessWidget {
                             await provider.cambiarEstado(solicitud.id, e);
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Estado actualizado a "$e"')),
+                                SnackBar(
+                                    content: Text('Estado actualizado a "$e"')),
                               );
                               context.go('/solicitudes');
                             }

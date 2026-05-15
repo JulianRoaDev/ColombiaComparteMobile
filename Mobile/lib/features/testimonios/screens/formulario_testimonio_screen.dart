@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../models/testimonio_model.dart';
 import '../providers/testimonios_provider.dart';
 import '../services/testimonios_services.dart';
 import '../../../features/auth/providers/auth_provider.dart';
@@ -9,7 +10,8 @@ import '../../../core/networks/dio_client.dart';
 
 class FormularioTestimonioScreen extends StatefulWidget {
   final String? testimonioId;
-  const FormularioTestimonioScreen({super.key, this.testimonioId});
+  final TestimonioModel? testimonio;
+  const FormularioTestimonioScreen({super.key, this.testimonioId, this.testimonio});
 
   bool get esEdicion => testimonioId != null;
 

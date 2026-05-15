@@ -32,7 +32,7 @@ class _NoticiasScreenState extends State<NoticiasScreen> {
       appBar: AppBar(title: const Text('Noticias')),
       drawer: const AppDrawer(),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.go('/noticias/nuevo'),
+        onPressed: () => context.go('/noticias/form'),
         icon: const Icon(Icons.add),
         label: const Text('Nueva'),
       ),
@@ -56,7 +56,7 @@ class _NoticiasScreenState extends State<NoticiasScreen> {
                 return _NoticiaCard(
                   noticia: n,
                   puedeEliminar: !user!.isEditor,
-                  onEditar: () => context.go('/noticias/${n.id}/editar'),
+                  onEditar: () => context.go('/noticias/form', extra: n),
                   onToggleEstado: () async {
                     final nuevoEstado =
                         n.estado == 'publicado' ? 'borrador' : 'publicado';

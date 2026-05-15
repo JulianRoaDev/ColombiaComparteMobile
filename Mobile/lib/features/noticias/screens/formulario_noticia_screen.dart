@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../models/noticia_model.dart';
 import '../providers/noticias_provider.dart';
 import '../services/noticias_service.dart';
 import '../../../features/auth/providers/auth_provider.dart';
@@ -9,7 +10,8 @@ import '../../../core/networks/dio_client.dart';
 
 class FormularioNoticiaScreen extends StatefulWidget {
   final String? noticiaId;
-  const FormularioNoticiaScreen({super.key, this.noticiaId});
+  final NoticiaModel? noticia;
+  const FormularioNoticiaScreen({super.key, this.noticiaId, this.noticia});
 
   bool get esEdicion => noticiaId != null;
 

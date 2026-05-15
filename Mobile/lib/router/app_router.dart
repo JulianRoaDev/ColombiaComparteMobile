@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:latinoamerica_comparte_admin/features/noticias/models/noticia_model.dart';
+import 'package:latinoamerica_comparte_admin/features/testimonios/models/testimonio_model.dart';
 import '../features/auth/providers/auth_provider.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/dashboard/screens/dashboard_screen.dart';
@@ -29,19 +31,15 @@ class AppRouter {
 
         if (isLoading) return null;
 
-        // ✅ Primero: si ya está autenticado y está en login → dashboard
         if (isAuth && ruta == '/login') return '/dashboard';
 
-        // ✅ Segundo: rutas públicas como /contacto (no /login cuando está autenticado)
         final esPublica = _rutasPublicas
             .where((r) => r != '/login')
             .any((r) => ruta.startsWith(r));
         if (esPublica) return null;
 
-        // ✅ Tercero: si no está autenticado → login
         if (!isAuth) return '/login';
 
-        // ✅ Restricciones por rol
         final user = authProvider.user;
         if (ruta == '/paises' && user?.rol != 'superadmin') return '/dashboard';
         if (ruta.startsWith('/solicitudes') && user?.rol == 'editor')
@@ -89,7 +87,7 @@ class AppRouter {
         GoRoute(
           path: '/testimonios/form',
           builder: (_, state) =>
-              FormularioTestimonioScreen(testimonioId: state.extra as String?),
+              FormularioTestimonioScreen(testimonio: state.extra as TestimonioModel?),
         ),
         GoRoute(
           path: '/noticias',
@@ -98,7 +96,7 @@ class AppRouter {
         GoRoute(
           path: '/noticias/form',
           builder: (_, state) =>
-              FormularioNoticiaScreen(noticiaId: state.extra as String?),
+              FormularioNoticiaScreen(noticia: state.extra as NoticiaModel?),
         ),
       ],
     );
