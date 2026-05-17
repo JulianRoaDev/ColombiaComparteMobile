@@ -1,14 +1,15 @@
-const Solicitud  = require('../models/Solicitud');
-const Testimonio = require('../models/Testimonio');
-const Noticia    = require('../models/Noticia');
-const Pais       = require('../models/Pais');
+//import { Request, Response } from 'mongoose';
+import { Request as ExpressRequest, Response } from 'express';
+import Solicitud  from '../models/Solicitud';
+import Testimonio from '../models/Testimonio';
+import Noticia    from '../models/Noticia';
+import Pais       from '../models/Pais';
 
-const getStats = async (req, res) => {
+export const getStats = async (req: ExpressRequest, res: Response): Promise<void> => {
   try {
-    const { rol, pais_asignado } = req.user;
+    const user = req.user!;
 
-    // ── SUPERADMIN: metrics for each country ──────────────────────────
-    if (rol === 'superadmin') {
+    if (user.rol === 'superadmin') {
       const paises = await Pais.find({ activo: true });
 
       const statsPorPais = await Promise.all(
@@ -29,16 +30,16 @@ const getStats = async (req, res) => {
         })
       );
 
-      return res.status(200).json({ rol: 'superadmin', stats: statsPorPais });
+      res.status(200).json({ rol: 'superadmin', stats: statsPorPais });
+      return;
     }
 
-    // ── ADMIN_PAIS / EDITOR: Only the assignment country ──────────────────────────
-    if (!pais_asignado) {
-      return res.status(400).json({ message: 'Usuario sin país asignado' });
+    if (!user.pais_asignado) {
+      res.status(400).json({ message: 'Usuario sin país asignado' });
+      return;
     }
 
-    // pais_asignado can arrive like an obj {_id, nombre, codigo} or only the _id
-    const paisId = pais_asignado._id || pais_asignado;
+    const paisId = user.pais_asignado._id;
 
     const [solicitudesPendientes, testimoniosPublicados, noticiasActivas] =
       await Promise.all([
@@ -47,20 +48,17 @@ const getStats = async (req, res) => {
         Noticia.countDocuments({ pais: paisId, estado: 'publicado' })
       ]);
 
-    return res.status(200).json({
-      rol,
+    res.status(200).json({
+      rol: user.rol,
       stats: {
-        pais: pais_asignado,
+        pais: user.pais_asignado,
         solicitudesPendientes,
         testimoniosPublicados,
         noticiasActivas
       }
     });
-
   } catch (error) {
     console.error('Error en dashboard stats:', error);
-    return res.status(500).json({ message: 'Error interno del servidor' });
+    res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
-
-module.exports = { getStats };
