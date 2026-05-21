@@ -10,10 +10,34 @@ const getPaisFilter = (user: Express.Request['user'], paisQuery?: string): PaisF
 
 export const listar = async (req: Request, res: Response): Promise<void> => {
   try {
-    const filter = getPaisFilter(req.user, req.query.pais as string);
+    const user = req.user!;
+    let filter: Record<string, unknown> = {};
+
+    if (user.rol === 'superadmin') {
+      // View all testimonies, optionally filter by country
+      if (req.query.pais) filter.pais = req.query.pais;
+
+    } else if (user.rol === 'admin_pais') {
+      // View all testimonies of their assigned country
+      filter.pais = user.pais_asignado?._id;
+
+    } else {
+      // editor & usuario_general:
+      // - Testimonies from their country that are published
+      // - Their own testimonies regardless of state
+      const paisId = user.pais_asignado?._id;
+      filter = {
+        $or: [
+          { estado: 'publicado', pais: paisId },
+          { creador: user.id }
+        ]
+      };
+    }
+
     const testimonios = await Testimonio.find(filter)
       .populate('pais', 'nombre codigo')
       .sort({ fecha_creacion: -1 });
+
     res.status(200).json(testimonios);
   } catch (error) {
     res.status(500).json({ message: 'Error al listar testimonios' });
@@ -43,9 +67,10 @@ export const crear = async (req: Request, res: Response): Promise<void> => {
 
     const nuevo = await Testimonio.create({
       nombre, foto_url, testimonio, pais,
+      creador: req.user?.id ?? null,
       instagram_url: instagram_url ?? null,
-      facebook_url:  facebook_url  ?? null,
-      estado:        estado ?? 'borrador'
+      facebook_url: facebook_url ?? null,
+      estado: estado ?? 'borrador'
     });
     const populated = await nuevo.populate('pais', 'nombre codigo');
     res.status(201).json(populated);
@@ -62,8 +87,16 @@ export const editar = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    if (req.user?.rol !== 'superadmin') {
-      const paisId = req.user?.pais_asignado?._id?.toString();
+    const user = req.user!;
+
+    // usuario_general solo puede editar sus propios testimonios
+    if (user.rol === 'usuario_general') {
+      if (testimonio.creador?.toString() !== user.id) {
+        res.status(403).json({ message: 'Solo puedes editar tus propios testimonios' });
+        return;
+      }
+    } else if (user.rol !== 'superadmin') {
+      const paisId = user.pais_asignado?._id?.toString();
       if (testimonio.pais.toString() !== paisId) {
         res.status(403).json({ message: 'No puedes editar testimonios de otro país' });
         return;
@@ -120,6 +153,11 @@ export const eliminar = async (req: Request, res: Response): Promise<void> => {
         res.status(403).json({ message: 'No puedes eliminar testimonios de otro país' });
         return;
       }
+    }
+
+    if (user.rol === 'usuario_general') {
+      res.status(403).json({ message: 'No tienes permisos para eliminar testimonios' });
+      return;
     }
 
     await Testimonio.findByIdAndDelete(req.params.id);

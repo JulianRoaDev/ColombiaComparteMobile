@@ -6,6 +6,7 @@ class TestimonioModel {
   final String    fotoUrl;
   final String    testimonio;
   final PaisModel pais;
+  final String?   creador;
   final String?   instagramUrl;
   final String?   facebookUrl;
   final String    estado;
@@ -17,6 +18,7 @@ class TestimonioModel {
     required this.fotoUrl,
     required this.testimonio,
     required this.pais,
+    required this.creador,
     this.instagramUrl,
     this.facebookUrl,
     required this.estado,
@@ -30,6 +32,7 @@ class TestimonioModel {
       fotoUrl:      json['foto_url']     ?? '',
       testimonio:   json['testimonio']   ?? '',
       pais:         PaisModel.fromJson(json['pais'] as Map<String, dynamic>),
+      creador:      json['creador']?.toString(),
       instagramUrl: json['instagram_url'],
       facebookUrl:  json['facebook_url'],
       estado:       json['estado']       ?? 'borrador',

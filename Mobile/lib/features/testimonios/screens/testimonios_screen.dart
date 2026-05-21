@@ -63,21 +63,56 @@ class _TestimoniosScreenState extends State<TestimoniosScreen> {
               itemCount: prov.testimonios.length,
               itemBuilder: (context, index) {
                 final t = prov.testimonios[index];
-                final estados = ['borrador', 'publicado', 'despublicado'];
-                final siguiente =
-                    estados[(estados.indexOf(t.estado) + 1) % estados.length];
+                final user = context.read<AuthProvider>().user!;
+
+                // ¿El usuario actual es dueño de este testimonio?
+                // creador viene del backend como String en el JSON
+                final esPropietario = t.creador != null && t.creador == user.id;
+                final esAdminOSuperAdmin =
+                    user.isSuperAdmin || user.isAdminPais;
+
+                // Puede cambiar estado si es admin/superadmin O si es el dueño
+                final puedeCambiarEstado = esAdminOSuperAdmin || esPropietario;
+
+                // Puede editar si es admin/superadmin O si es el dueño
+                final puedeEditar = esAdminOSuperAdmin || esPropietario;
+
+                // Puede eliminar solo admins (no editor ni usuario_general)
+                final puedeEliminar = esAdminOSuperAdmin;
+
                 return _TestimonioCard(
                   testimonio: t,
-                  onCambiarEstado: () => prov.cambiarEstado(t.id, siguiente),
-                  onEditar: () => context.go('/testimonios/form', extra: t),
-                  puedeEliminar: rol != 'editor',
-                  onEliminar: () async {
-                    final ok = await showConfirmDialog(context,
-                        title: 'Eliminar testimonio',
-                        content: '¿Eliminar a ${t.nombre}?',
-                        confirmText: 'Eliminar');
-                    if (ok) prov.eliminar(t.id);
-                  },
+                  puedeEliminar: puedeEliminar,
+                  puedeCambiarEstado: puedeCambiarEstado,
+                  puedeEditar: puedeEditar,
+                  onCambiarEstado: puedeCambiarEstado
+                      ? (nuevoEstado) async {
+                          final ok =
+                              await prov.cambiarEstado(t.id, nuevoEstado);
+                          if (!ok && context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Error al cambiar estado'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                      : (_) {},
+                  onEditar: puedeEditar
+                      ? () => context.push('/testimonios/form', extra: t)
+                      : () {},
+                  onEliminar: puedeEliminar
+                      ? () async {
+                          final ok = await showConfirmDialog(
+                            context,
+                            title: 'Eliminar testimonio',
+                            content: '¿Eliminar a ${t.nombre}?',
+                            confirmText: 'Eliminar',
+                          );
+                          if (ok && context.mounted) prov.eliminar(t.id);
+                        }
+                      : () {},
                 );
               },
             ),
@@ -91,21 +126,26 @@ class _TestimoniosScreenState extends State<TestimoniosScreen> {
 class _TestimonioCard extends StatelessWidget {
   final TestimonioModel testimonio;
   final bool puedeEliminar;
+  final bool puedeEditar;
+  final bool puedeCambiarEstado;
+  final Function(String) onCambiarEstado;
   final VoidCallback onEditar;
-  final VoidCallback onCambiarEstado;
   final VoidCallback onEliminar;
 
   const _TestimonioCard({
     required this.testimonio,
     required this.puedeEliminar,
-    required this.onEditar,
+    required this.puedeEditar,
+    required this.puedeCambiarEstado,
     required this.onCambiarEstado,
+    required this.onEditar,
     required this.onEliminar,
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
+      margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -140,31 +180,34 @@ class _TestimonioCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontSize: 13)),
             const SizedBox(height: 10),
-
-            // Acciones
             Row(
               children: [
-                Flexible(
-                  // ← agregar Flexible
-                  child: DropdownButton<String>(
-                    value: testimonio.estado,
-                    isDense: true,
-                    underline: const SizedBox(),
-                    isExpanded: true, // ← agregar isExpanded
-                    items: ['borrador', 'publicado', 'despublicado']
-                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                        .toList(),
-                    onChanged: (val) {
-                      if (val != null) onCambiarEstado();
-                    },
+                // Dropdown de estado — solo si tiene permisos
+                if (puedeCambiarEstado)
+                  Flexible(
+                    child: DropdownButton<String>(
+                      value: testimonio.estado,
+                      isDense: true,
+                      isExpanded: true,
+                      underline: const SizedBox(),
+                      items: ['borrador', 'publicado', 'despublicado']
+                          .map(
+                              (e) => DropdownMenuItem(value: e, child: Text(e)))
+                          .toList(),
+                      onChanged: (val) {
+                        if (val != null) onCambiarEstado(val);
+                      },
+                    ),
                   ),
-                ),
                 const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.edit_outlined),
-                  onPressed: onEditar,
-                  tooltip: 'Editar',
-                ),
+                // Editar — solo si tiene permisos
+                if (puedeEditar)
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined),
+                    onPressed: onEditar,
+                    tooltip: 'Editar',
+                  ),
+                // Eliminar — solo admins
                 if (puedeEliminar)
                   IconButton(
                     icon: const Icon(Icons.delete_outline, color: Colors.red),

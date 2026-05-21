@@ -7,15 +7,15 @@ enum AuthStatus { initial, loading, authenticated, unauthenticated, error }
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
 
-  AuthStatus _status        = AuthStatus.initial;
+  AuthStatus _status = AuthStatus.initial;
   UserModel? _user;
-  String?    _errorMessage;
+  String? _errorMessage;
 
   // ── Getters ──────────────────────────────────────────────────────────────
-  AuthStatus get status       => _status;
-  UserModel? get user         => _user;
-  String?    get errorMessage => _errorMessage;
-  bool get isAuthenticated    => _status == AuthStatus.authenticated;
+  AuthStatus get status => _status;
+  UserModel? get user => _user;
+  String? get errorMessage => _errorMessage;
+  bool get isAuthenticated => _status == AuthStatus.authenticated;
 
   // ── Verify Authentication Status ─────────────────────────────────────────
   Future<void> checkAuth() async {
@@ -25,7 +25,7 @@ class AuthProvider extends ChangeNotifier {
     final storedUser = await _authService.getStoredUser();
 
     if (storedUser != null) {
-      _user   = storedUser;
+      _user = storedUser;
       _status = AuthStatus.authenticated;
     } else {
       _status = AuthStatus.unauthenticated;
@@ -35,20 +35,20 @@ class AuthProvider extends ChangeNotifier {
 
   // ── Login ────────────────────────────────────────────────────────────────
   Future<bool> login(String correo, String password) async {
-    _status       = AuthStatus.loading;
+    _status = AuthStatus.loading;
     _errorMessage = null;
     notifyListeners();
 
     final result = await _authService.login(correo, password);
 
     if (result['success'] == true) {
-      _user   = result['user'] as UserModel;
+      _user = result['user'] as UserModel;
       _status = AuthStatus.authenticated;
       notifyListeners();
       return true;
     } else {
       _errorMessage = result['message'] as String;
-      _status       = AuthStatus.error;
+      _status = AuthStatus.error;
       notifyListeners();
       return false;
     }
@@ -57,8 +57,23 @@ class AuthProvider extends ChangeNotifier {
   // ── Logout ───────────────────────────────────────────────────────────────
   Future<void> logout() async {
     await _authService.logout();
-    _user   = null;
+    _user = null;
     _status = AuthStatus.unauthenticated;
     notifyListeners();
+  }
+
+  // ── Actualizate ─────────────────────────────────────────────────────────────
+  Future<bool> actualizarPerfil(
+      {required String nombre, String? fotoUrl}) async {
+    final result = await _authService.actualizarPerfil(
+      nombre: nombre,
+      fotoUrl: fotoUrl,
+    );
+    if (result['success'] == true) {
+      _user = result['user'] as UserModel;
+      notifyListeners();
+      return true;
+    }
+    return false;
   }
 }

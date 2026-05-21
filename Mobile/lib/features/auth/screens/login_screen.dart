@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 
@@ -10,9 +11,9 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _formKey        = GlobalKey<FormState>();
-  final _correoCtrl     = TextEditingController();
-  final _passwordCtrl   = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final _correoCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
   bool _obscurePassword = true;
 
   @override
@@ -184,6 +185,11 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           );
                         },
+                      ),
+                      const SizedBox(height: 16),
+                      TextButton(
+                        onPressed: () => context.go('/register'),
+                        child: const Text('¿No tienes cuenta? Regístrate'),
                       ),
                     ],
                   ),

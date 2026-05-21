@@ -9,33 +9,42 @@ import '../../../features/auth/models/user_model.dart';
 import '../../../core/networks/dio_client.dart';
 
 class FormularioNoticiaScreen extends StatefulWidget {
-  final String? noticiaId;
   final NoticiaModel? noticia;
-  const FormularioNoticiaScreen({super.key, this.noticiaId, this.noticia});
+  const FormularioNoticiaScreen({super.key, this.noticia});
 
-  bool get esEdicion => noticiaId != null;
+  bool get esEdicion => noticia != null;
 
   @override
-  State<FormularioNoticiaScreen> createState() => _FormularioNoticiaScreenState();
+  State<FormularioNoticiaScreen> createState() =>
+      _FormularioNoticiaScreenState();
 }
 
 class _FormularioNoticiaScreenState extends State<FormularioNoticiaScreen> {
-  final _formKey      = GlobalKey<FormState>();
-  final _tituloCtrl   = TextEditingController();
-  final _resumenCtrl  = TextEditingController();
-  final _contenCtrl   = TextEditingController();
-  final _autorCtrl    = TextEditingController();
-  final _imagenCtrl   = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final _tituloCtrl = TextEditingController();
+  final _resumenCtrl = TextEditingController();
+  final _contenCtrl = TextEditingController();
+  final _autorCtrl = TextEditingController();
+  final _imagenCtrl = TextEditingController();
 
-  String  _estado  = 'borrador';
+  String _estado = 'borrador';
   String? _paisId;
-  List<PaisModel> _paises  = [];
-  bool _loading  = false;
+  List<PaisModel> _paises = [];
+  bool _loading = false;
   bool _cargando = true;
 
   @override
   void initState() {
     super.initState();
+    if (widget.esEdicion) {
+      final n = widget.noticia!;
+      _tituloCtrl.text = n.titulo;
+      _resumenCtrl.text = n.resumen;
+      _contenCtrl.text = n.contenido;
+      _autorCtrl.text = n.autor;
+      _imagenCtrl.text = n.imagenUrl ?? '';
+      _estado = n.estado;
+    }
     _init();
   }
 
@@ -59,17 +68,17 @@ class _FormularioNoticiaScreenState extends State<FormularioNoticiaScreen> {
         final response = await DioClient.instance.get('/noticias');
         final lista = response.data as List;
         final dato = lista.firstWhere(
-          (e) => e['_id'] == widget.noticiaId,
+          (e) => e['_id'] == widget.noticia!.id,
           orElse: () => null,
         );
         if (dato != null) {
-          _tituloCtrl.text  = dato['titulo']    ?? '';
-          _resumenCtrl.text = dato['resumen']   ?? '';
-          _contenCtrl.text  = dato['contenido'] ?? '';
-          _autorCtrl.text   = dato['autor']     ?? '';
-          _imagenCtrl.text  = dato['imagen_url'] ?? '';
-          _estado           = dato['estado']    ?? 'borrador';
-          _paisId           = dato['pais']['_id'];
+          _tituloCtrl.text = dato['titulo'] ?? '';
+          _resumenCtrl.text = dato['resumen'] ?? '';
+          _contenCtrl.text = dato['contenido'] ?? '';
+          _autorCtrl.text = dato['autor'] ?? '';
+          _imagenCtrl.text = dato['imagen_url'] ?? '';
+          _estado = dato['estado'] ?? 'borrador';
+          _paisId = dato['pais']['_id'];
         }
       } catch (_) {}
     }
@@ -79,45 +88,59 @@ class _FormularioNoticiaScreenState extends State<FormularioNoticiaScreen> {
 
   Future<void> _guardar() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _loading = true);
 
+    final user = context.read<AuthProvider>().user!;
+    final paisId = widget.esEdicion
+        ? widget.noticia!.pais.id
+        : (user.paisAsignado?.id ?? '');
+
     final data = {
-      'titulo':    _tituloCtrl.text.trim(),
-      'resumen':   _resumenCtrl.text.trim(),
+      'titulo': _tituloCtrl.text.trim(),
+      'resumen': _resumenCtrl.text.trim(),
       'contenido': _contenCtrl.text.trim(),
-      'autor':     _autorCtrl.text.trim(),
-      'imagen_url': _imagenCtrl.text.trim().isEmpty ? null : _imagenCtrl.text.trim(),
-      'pais':      _paisId,
-      'estado':    _estado,
+      'autor': _autorCtrl.text.trim(),
+      'imagen_url':
+          _imagenCtrl.text.trim().isEmpty ? null : _imagenCtrl.text.trim(),
+      'pais': paisId,
+      'estado': _estado,
     };
 
-    final service = NoticiasService();
-    final result = widget.esEdicion
-        ? await service.actualizar(widget.noticiaId!, data)
-        : await service.crear(data);
-
-    setState(() => _loading = false);
-
-    if (!mounted) return;
-
-    if (result['success'] == true) {
-      await context.read<NoticiasProvider>().cargar();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(widget.esEdicion ? 'Noticia actualizada' : 'Noticia creada')),
-      );
-      context.go('/noticias');
+    final provider = context.read<NoticiasProvider>();
+    bool ok;
+    if (widget.esEdicion) {
+      ok = await provider.editar(widget.noticia!.id, data);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result['message'] ?? 'Error al guardar')),
-      );
+      ok = await provider.crear(data);
+    }
+
+    if (mounted) {
+      setState(() => _loading = false);
+      if (ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                widget.esEdicion ? 'Noticia actualizada' : 'Noticia creada'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        context.pop();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Error al guardar'), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
   @override
   void dispose() {
-    _tituloCtrl.dispose(); _resumenCtrl.dispose(); _contenCtrl.dispose();
-    _autorCtrl.dispose(); _imagenCtrl.dispose();
+    _tituloCtrl.dispose();
+    _resumenCtrl.dispose();
+    _contenCtrl.dispose();
+    _autorCtrl.dispose();
+    _imagenCtrl.dispose();
     super.dispose();
   }
 
@@ -128,6 +151,17 @@ class _FormularioNoticiaScreenState extends State<FormularioNoticiaScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.esEdicion ? 'Editar Noticia' : 'Nueva Noticia'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              // Fallback si no hay stack
+              context.go(widget.esEdicion ? '/noticias' : '/noticias');
+            }
+          },
+        ),
       ),
       body: _cargando
           ? const Center(child: CircularProgressIndicator())
@@ -140,69 +174,81 @@ class _FormularioNoticiaScreenState extends State<FormularioNoticiaScreen> {
                   children: [
                     TextFormField(
                       controller: _tituloCtrl,
-                      decoration: const InputDecoration(labelText: 'Título *', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                          labelText: 'Título *', border: OutlineInputBorder()),
                       validator: (v) => v!.isEmpty ? 'Requerido' : null,
                     ),
                     const SizedBox(height: 14),
                     TextFormField(
                       controller: _resumenCtrl,
                       maxLines: 2,
-                      decoration: const InputDecoration(labelText: 'Resumen *', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                          labelText: 'Resumen *', border: OutlineInputBorder()),
                       validator: (v) => v!.isEmpty ? 'Requerido' : null,
                     ),
                     const SizedBox(height: 14),
                     TextFormField(
                       controller: _contenCtrl,
                       maxLines: 6,
-                      decoration: const InputDecoration(labelText: 'Contenido *', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                          labelText: 'Contenido *',
+                          border: OutlineInputBorder()),
                       validator: (v) => v!.isEmpty ? 'Requerido' : null,
                     ),
                     const SizedBox(height: 14),
                     TextFormField(
                       controller: _autorCtrl,
-                      decoration: const InputDecoration(labelText: 'Autor *', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                          labelText: 'Autor *', border: OutlineInputBorder()),
                       validator: (v) => v!.isEmpty ? 'Requerido' : null,
                     ),
                     const SizedBox(height: 14),
-
                     if (user.isSuperAdmin && _paises.isNotEmpty)
                       DropdownButtonFormField<String>(
                         value: _paisId,
-                        decoration: const InputDecoration(labelText: 'País *', border: OutlineInputBorder()),
-                        items: _paises.map((p) =>
-                            DropdownMenuItem(value: p.id, child: Text(p.nombre))).toList(),
+                        decoration: const InputDecoration(
+                            labelText: 'País *', border: OutlineInputBorder()),
+                        items: _paises
+                            .map((p) => DropdownMenuItem(
+                                value: p.id, child: Text(p.nombre)))
+                            .toList(),
                         onChanged: (val) => setState(() => _paisId = val),
                       )
                     else
                       InputDecorator(
-                        decoration: const InputDecoration(labelText: 'País', border: OutlineInputBorder()),
+                        decoration: const InputDecoration(
+                            labelText: 'País', border: OutlineInputBorder()),
                         child: Text(user.paisAsignado?.nombre ?? ''),
                       ),
                     const SizedBox(height: 14),
-
                     TextFormField(
                       controller: _imagenCtrl,
-                      decoration: const InputDecoration(labelText: 'URL imagen (opcional)', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                          labelText: 'URL imagen (opcional)',
+                          border: OutlineInputBorder()),
                     ),
                     const SizedBox(height: 14),
-
                     DropdownButtonFormField<String>(
                       value: _estado,
-                      decoration: const InputDecoration(labelText: 'Estado', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                          labelText: 'Estado', border: OutlineInputBorder()),
                       items: ['borrador', 'publicado']
-                          .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                          .map(
+                              (e) => DropdownMenuItem(value: e, child: Text(e)))
                           .toList(),
                       onChanged: (val) => setState(() => _estado = val!),
                     ),
                     const SizedBox(height: 28),
-
                     SizedBox(
                       height: 50,
                       child: FilledButton(
                         onPressed: _loading ? null : _guardar,
                         child: _loading
-                            ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                            : Text(widget.esEdicion ? 'Guardar cambios' : 'Publicar noticia'),
+                            ? const CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2)
+                            : Text(widget.esEdicion
+                                ? 'Guardar cambios'
+                                : 'Publicar noticia'),
                       ),
                     ),
                   ],

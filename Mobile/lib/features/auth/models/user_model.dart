@@ -31,6 +31,7 @@ class UserModel {
   final String    nombre;
   final String    correo;
   final String    rol;
+  final String?   fotoUrl;
   final PaisModel? paisAsignado;
 
   UserModel({
@@ -38,6 +39,7 @@ class UserModel {
     required this.nombre,
     required this.correo,
     required this.rol,
+    this.fotoUrl,
     this.paisAsignado,
   });
 
@@ -45,6 +47,9 @@ class UserModel {
   bool get isSuperAdmin => rol == 'superadmin';
   bool get isAdminPais  => rol == 'admin_pais';
   bool get isEditor     => rol == 'editor';
+  bool get isUsuarioGeneral=> rol == 'usuario_general';
+
+  bool get isAdminOrAbove  => isSuperAdmin || isAdminPais;
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
@@ -52,6 +57,7 @@ class UserModel {
       nombre: json['nombre'] ?? '',
       correo: json['correo'] ?? '',
       rol:    json['rol']    ?? '',
+      fotoUrl: json['foto_url'] as String?,
       paisAsignado: json['pais_asignado'] != null
           ? PaisModel.fromJson(json['pais_asignado'] as Map<String, dynamic>)
           : null,
@@ -63,6 +69,7 @@ class UserModel {
     'nombre':       nombre,
     'correo':       correo,
     'rol':          rol,
+    'foto_url':     fotoUrl,
     'pais_asignado': paisAsignado?.toJson(),
   };
 }

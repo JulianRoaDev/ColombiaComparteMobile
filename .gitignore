@@ -17,3 +17,4 @@ mobile/android/app/release/
 # ── General ───────────────────────────────────
 .DS_Store
 *.log
+.vscode/

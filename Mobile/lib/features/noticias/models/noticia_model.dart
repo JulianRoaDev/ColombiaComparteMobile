@@ -7,6 +7,7 @@ class NoticiaModel {
   final String    contenido;
   final String    autor;
   final String?   imagenUrl;
+  final String?    creador;
   final PaisModel pais;
   final String    estado;
   final DateTime  fechaCreacion;
@@ -18,6 +19,7 @@ class NoticiaModel {
     required this.contenido,
     required this.autor,
     this.imagenUrl,
+    this.creador,
     required this.pais,
     required this.estado,
     required this.fechaCreacion,
@@ -31,6 +33,7 @@ class NoticiaModel {
       contenido:    json['contenido']    ?? '',
       autor:        json['autor']        ?? '',
       imagenUrl:    json['imagen_url'],
+      creador:      json['creador']?.toString(),
       pais:         PaisModel.fromJson(json['pais'] as Map<String, dynamic>),
       estado:       json['estado']       ?? 'borrador',
       fechaCreacion: DateTime.tryParse(json['fecha_creacion'] ?? '') ?? DateTime.now(),

@@ -5,6 +5,7 @@ export interface ITestimonio {
   foto_url: string;
   testimonio: string;
   pais: Types.ObjectId;
+  creador: Types.ObjectId | null;
   instagram_url: string | null;
   facebook_url: string | null;
   estado: 'borrador' | 'publicado' | 'despublicado';
@@ -18,6 +19,7 @@ const testimonioSchema = new Schema<ITestimonioDocument>({
   foto_url:      { type: String, required: true },
   testimonio:    { type: String, required: true },
   pais:          { type: Schema.Types.ObjectId, ref: 'Pais', required: true },
+  creador:       { type: Schema.Types.ObjectId, ref: 'Usuario', default: null },
   instagram_url: { type: String, default: null },
   facebook_url:  { type: String, default: null },
   estado: {

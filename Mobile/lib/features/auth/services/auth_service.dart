@@ -21,7 +21,7 @@ class AuthService {
         data: {'correo': correo, 'password': password},
       );
 
-      // 
+      //
       print('>>> Status: ${response.statusCode}');
       print('>>> Data: ${response.data}');
 
@@ -75,6 +75,58 @@ class AuthService {
       return UserModel.fromJson(jsonDecode(userJson) as Map<String, dynamic>);
     } catch (_) {
       return null;
+    }
+  }
+
+  // ── Register ─────────────────────────────────────────────────────────────
+  Future<Map<String, dynamic>> register({
+    required String nombre,
+    required String correo,
+    required String password,
+    required String rol,
+    String? paisId,
+  }) async {
+    try {
+      await _dio.post('/auth/register', data: {
+        'nombre': nombre,
+        'correo': correo,
+        'password': password,
+        'rol': rol,
+        'pais_asignado': paisId,
+      });
+      return {'success': true};
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ?? 'Error al crear cuenta';
+      return {'success': false, 'message': msg};
+    }
+  }
+
+  // ── Update Profile ───────────────────────────────────────────────────────
+  Future<Map<String, dynamic>> actualizarPerfil({
+    required String nombre,
+    String? fotoUrl,
+  }) async {
+    try {
+      final response = await _dio.patch('/auth/perfil', data: {
+        'nombre': nombre,
+        'foto_url': fotoUrl,
+      });
+
+      final token = response.data['token'] as String;
+      final usuarioJson = response.data['usuario'] as Map<String, dynamic>;
+
+      await _storage.write(key: AppConstants.tokenKey, value: token);
+      await _storage.write(
+        key: AppConstants.userKey,
+        value: jsonEncode(usuarioJson),
+      );
+
+      return {'success': true, 'user': UserModel.fromJson(usuarioJson)};
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ?? 'Error al actualizar perfil';
+      return {'success': false, 'message': msg};
+    } catch (e) {
+      return {'success': false, 'message': 'Error inesperado'};
     }
   }
 }

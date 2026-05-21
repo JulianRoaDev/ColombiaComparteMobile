@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/dashboard/providers/dashboard_provider.dart';
+import '../../features/theme/theme_provider.dart';
 import 'confirm_dialog.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -52,6 +53,16 @@ class AppDrawer extends StatelessWidget {
             ],
           ),
         ),
+        Consumer<ThemeProvider>(
+          builder: (context, themeProvider, _) => IconButton(
+            icon: Icon(themeProvider.isDarkMode
+                ? Icons.light_mode_outlined
+                : Icons.dark_mode_outlined),
+            tooltip: themeProvider.isDarkMode ? 'Modo claro' : 'Modo oscuro',
+            onPressed: themeProvider.toggle,
+          ),
+        ),
+
         const Divider(indent: 16, endIndent: 16),
 
         // ── Navigation items ────────────────────────────────────────────
@@ -69,8 +80,16 @@ class AppDrawer extends StatelessWidget {
             route: '/paises',
           ),
 
+        // Only SuperAdmin can see the "Usuarios" section, since only they can manage users
+        if (user.isSuperAdmin)
+          const _DrawerItem(
+            icon: Icons.manage_accounts_outlined,
+            label: 'Usuarios',
+            route: '/usuarios',
+          ),
+
         // SuperAdmin and admin can see "Solicitudes", but editors cannot
-        if (!user.isEditor)
+        if (!user.isEditor && !user.isUsuarioGeneral)
           const _DrawerItem(
             icon: Icons.inbox_outlined,
             label: 'Solicitudes',

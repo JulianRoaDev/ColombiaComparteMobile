@@ -8,17 +8,22 @@ import 'features/solicitudes/providers/solicitudes_provider.dart';
 import 'features/testimonios/providers/testimonios_provider.dart';
 import 'features/noticias/providers/noticias_provider.dart';
 import 'router/app_router.dart';
+import 'features/theme/theme_provider.dart';
+import 'features/usuarios/providers/usuarios_provider.dart';
+import 'core/theme/app_theme.dart';
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => PaisesProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
         ChangeNotifierProvider(create: (_) => SolicitudesProvider()),
         ChangeNotifierProvider(create: (_) => TestimoniosProvider()),
         ChangeNotifierProvider(create: (_) => NoticiasProvider()),
+        ChangeNotifierProvider(create: (_) => UsuariosProvider()),
       ],
       child: const CmsApp(),
     ),
@@ -40,7 +45,7 @@ class _CmsAppState extends State<CmsApp> {
   void initState() {
     super.initState();
     _authProvider = context.read<AuthProvider>();
-    _router = AppRouter.createRouter(_authProvider); // ← una sola vez
+    _router = AppRouter.createRouter(_authProvider);
     _authProvider.checkAuth();
   }
 
@@ -48,18 +53,15 @@ class _CmsAppState extends State<CmsApp> {
   Widget build(BuildContext context) {
     // Solo observa para cambios de tema/locale, no recrea el router
     context.watch<AuthProvider>();
+    final themeProvider = context.watch<ThemeProvider>();
 
     return MaterialApp.router(
       title: 'CMS Latinoamérica Comparte',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF2D6A4F),
-          brightness: Brightness.light,
-        ),
-        useMaterial3: true,
-      ),
-      routerConfig: _router, // ← siempre el mismo
+      theme:      AppTheme.light,
+      darkTheme:  AppTheme.dark,         // <-- tema oscuro
+      themeMode:  themeProvider.themeMode,
+      routerConfig: _router,
     );
   }
 }

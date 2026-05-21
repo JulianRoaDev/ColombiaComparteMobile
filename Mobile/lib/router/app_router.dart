@@ -14,9 +14,12 @@ import '../features/testimonios/screens/formulario_testimonio_screen.dart';
 import '../features/noticias/screens/noticias_screen.dart';
 import '../features/noticias/screens/formulario_noticia_screen.dart';
 import '../features/perfil/screens/perfil_screen.dart';
+import '../features/auth/screens/register_screen.dart';
+import '../features/usuarios/screens/usuarios_screen.dart';
+import '../features/usuarios/screens/formulario_usuario_screen.dart';
 
 // Routes that can be accessed without authentication
-const _rutasPublicas = ['/login', '/contacto'];
+const _rutasPublicas = ['/login', '/contacto', '/register'];
 
 class AppRouter {
   static GoRouter createRouter(AuthProvider authProvider) {
@@ -41,9 +44,18 @@ class AppRouter {
         if (!isAuth) return '/login';
 
         final user = authProvider.user;
-        if (ruta == '/paises' && user?.rol != 'superadmin') return '/dashboard';
-        if (ruta.startsWith('/solicitudes') && user?.rol == 'editor')
+        if (ruta == '/paises' && user?.rol != 'superadmin') {
           return '/dashboard';
+        }
+        if (ruta.startsWith('/solicitudes') && user?.rol == 'editor') {
+          return '/dashboard';
+        }
+        if (ruta == '/usuarios' && user?.rol != 'superadmin') {
+          return '/dashboard';
+        }
+        if (ruta.startsWith('/usuarios/form') && user?.rol != 'superadmin') {
+          return '/dashboard';
+        }
 
         return null;
       },
@@ -57,8 +69,21 @@ class AppRouter {
           path: '/contacto',
           builder: (_, __) => const ContactoPublicoScreen(),
         ),
+        GoRoute(
+          path: '/register',
+          builder: (_, __) => const RegisterScreen(),
+        ),
 
         // ── Proetcted ──────────────────────────────────────────────────
+
+        GoRoute(
+          path: '/usuarios',
+          builder: (_, __) => const UsuariosScreen(),
+        ),
+        GoRoute(
+          path: '/usuarios/form',
+          builder: (_, __) => const FormularioUsuarioScreen(),
+        ),
         GoRoute(
           path: '/dashboard',
           builder: (_, __) => const DashboardScreen(),
@@ -86,8 +111,8 @@ class AppRouter {
         ),
         GoRoute(
           path: '/testimonios/form',
-          builder: (_, state) =>
-              FormularioTestimonioScreen(testimonio: state.extra as TestimonioModel?),
+          builder: (_, state) => FormularioTestimonioScreen(
+              testimonio: state.extra as TestimonioModel?),
         ),
         GoRoute(
           path: '/noticias',

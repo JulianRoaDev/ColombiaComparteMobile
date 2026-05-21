@@ -10,12 +10,34 @@ const getPaisFilter = (user: Express.Request['user'], paisQuery?: string): PaisF
 
 export const listar = async (req: Request, res: Response): Promise<void> => {
   try {
-    const filter: PaisFilter = getPaisFilter(req.user, req.query.pais as string);
-    if (req.query.estado) filter.estado = req.query.estado;
+    const user = req.user!;
+    let filter: Record<string, unknown> = {};
+
+    if (user.rol === 'superadmin') {
+      if (req.query.pais)   filter.pais   = req.query.pais;
+      if (req.query.estado) filter.estado = req.query.estado;
+
+    } else if (user.rol === 'admin_pais') {
+      filter.pais = user.pais_asignado?._id;
+      if (req.query.estado) filter.estado = req.query.estado;
+
+    } else {
+      // editor y usuario_general:
+      // - Noticias publicadas de su país
+      // - Sus propias noticias (cualquier estado)
+      const paisId = user.pais_asignado?._id;
+      filter = {
+        $or: [
+          { estado: 'publicado', pais: paisId },
+          { creador: user.id }
+        ]
+      };
+    }
 
     const noticias = await Noticia.find(filter)
       .populate('pais', 'nombre codigo')
       .sort({ fecha_creacion: -1 });
+
     res.status(200).json(noticias);
   } catch (error) {
     res.status(500).json({ message: 'Error al listar noticias' });
@@ -47,6 +69,7 @@ export const crear = async (req: Request, res: Response): Promise<void> => {
       titulo, resumen, contenido, autor,
       imagen_url: imagen_url ?? null,
       pais,
+      creador: req.user?.id ?? null,
       estado: estado ?? 'borrador'
     });
     const populated = await nueva.populate('pais', 'nombre codigo');

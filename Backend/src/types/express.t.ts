@@ -7,7 +7,8 @@ declare global {
         id: string;
         nombre: string;
         correo: string;
-        rol: 'superadmin' | 'admin_pais' | 'editor';
+        foto_url: string | null;
+        rol: 'superadmin' | 'admin_pais' | 'editor' | 'usuario_general';
         pais_asignado: {
           _id: string;
           nombre: string;

@@ -51,25 +51,58 @@ class _NoticiasScreenState extends State<NoticiasScreen> {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
               itemCount: provider.noticias.length,
               separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (_, i) {
-                final n = provider.noticias[i];
+              itemBuilder: (contex, index) {
+                final n = provider.noticias[index];
+                final user = context.read<AuthProvider>().user!;
+
+                final esPropietario = n.creador != null && n.creador == user.id;
+                final esAdminOSuperAdmin =
+                    user.isSuperAdmin || user.isAdminPais;
+
+                final puedeCambiarEstado = esPropietario || esAdminOSuperAdmin;
+                final puedeEditar = esPropietario || esAdminOSuperAdmin;
+                final puedeEliminar = esPropietario || user.isSuperAdmin;
+
                 return _NoticiaCard(
                   noticia: n,
-                  puedeEliminar: !user!.isEditor,
-                  onEditar: () => context.go('/noticias/form', extra: n),
-                  onToggleEstado: () async {
-                    final nuevoEstado =
-                        n.estado == 'publicado' ? 'borrador' : 'publicado';
-                    await provider.cambiarEstado(n.id, nuevoEstado);
-                  },
-                  onEliminar: () async {
-                    final ok = await showConfirmDialog(
-                      context,
-                      title: 'Eliminar noticia',
-                      content: '¿Eliminar "${n.titulo}"?',
-                    );
-                    if (ok) await provider.eliminar(n.id);
-                  },
+                  puedeEliminar: puedeEliminar,
+                  puedeEditar: puedeEditar,
+                  puedeCambiarEstado: puedeCambiarEstado,
+                  onToggleEstado: puedeCambiarEstado
+                      ? () async {
+                          final actual = provider.noticias.firstWhere(
+                            (x) => x.id == n.id,
+                            orElse: () => n,
+                          );
+                          final nuevoEstado = actual.estado == 'publicado'
+                              ? 'borrador'
+                              : 'publicado';
+                          final ok =
+                              await provider.cambiarEstado(n.id, nuevoEstado);
+                          if (!ok && context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Error al cambiar estado"),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                      : null,
+                  onEditar: puedeEditar
+                      ? () => context.push('/noticias/form', extra: n)
+                      : null,
+                  onEliminar: puedeEliminar
+                      ? () async {
+                          final ok = await showConfirmDialog(
+                            context,
+                            title: 'Eliminar noticia',
+                            content: '¿Eliminar "${n.titulo}"?',
+                            confirmText: 'Eliminar',
+                          );
+                          if (ok && context.mounted) provider.eliminar(n.id);
+                        }
+                      : null,
                 );
               },
             ),
@@ -83,73 +116,83 @@ class _NoticiasScreenState extends State<NoticiasScreen> {
 class _NoticiaCard extends StatelessWidget {
   final NoticiaModel noticia;
   final bool puedeEliminar;
-  final VoidCallback onEditar;
-  final VoidCallback onToggleEstado;
-  final VoidCallback onEliminar;
+  final bool puedeEditar;
+  final bool puedeCambiarEstado;
+  final VoidCallback? onToggleEstado; // ← nullable
+  final VoidCallback? onEditar; // ← nullable
+  final VoidCallback? onEliminar;
 
   const _NoticiaCard({
     required this.noticia,
     required this.puedeEliminar,
-    required this.onEditar,
-    required this.onToggleEstado,
-    required this.onEliminar,
+    required this.puedeEditar,
+    required this.puedeCambiarEstado,
+    this.onToggleEstado,
+    this.onEditar,
+    this.onEliminar,
   });
 
   @override
-Widget build(BuildContext context) {
-  return Card(
-    margin: const EdgeInsets.only(bottom: 12),
-    child: Padding(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(noticia.titulo,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 15)),
-              ),
-              EstadoChip(estado: noticia.estado),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(noticia.resumen,
-              style: const TextStyle(fontSize: 13, color: Colors.grey)),
-          const SizedBox(height: 6),
-          Row(children: [
-            Text('✍️ ${noticia.autor}', style: const TextStyle(fontSize: 12)),
-            const SizedBox(width: 12),
-            Text('🌍 ${noticia.pais.nombre}', style: const TextStyle(fontSize: 12)),
-          ]),
-          const Divider(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton.icon(
-                onPressed: onToggleEstado,
-                icon: Icon(
-                  noticia.estado == 'publicado'
-                      ? Icons.unpublished_outlined
-                      : Icons.publish,
-                  size: 18,
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(noticia.titulo,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 15)),
                 ),
-                label: Text(
-                    noticia.estado == 'publicado' ? 'Despublicar' : 'Publicar'),
-              ),
-              IconButton(
-                  icon: const Icon(Icons.edit_outlined), onPressed: onEditar),
-              if (puedeEliminar)
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.red),
-                  onPressed: onEliminar,
-                ),
-            ],
-          ),
-        ],
+                EstadoChip(estado: noticia.estado),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(noticia.resumen,
+                style: const TextStyle(fontSize: 13, color: Colors.grey)),
+            const SizedBox(height: 6),
+            Row(children: [
+              Text('✍️ ${noticia.autor}', style: const TextStyle(fontSize: 12)),
+              const SizedBox(width: 12),
+              Text('🌍 ${noticia.pais.nombre}',
+                  style: const TextStyle(fontSize: 12)),
+            ]),
+            const Divider(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                // Toggle solo si tiene permisos
+                if (puedeCambiarEstado && onToggleEstado != null)
+                  TextButton.icon(
+                    onPressed: onToggleEstado,
+                    icon: Icon(
+                      noticia.estado == 'publicado'
+                          ? Icons.unpublished_outlined
+                          : Icons.publish,
+                      size: 18,
+                    ),
+                    label: Text(noticia.estado == 'publicado'
+                        ? 'Despublicar'
+                        : 'Publicar'),
+                  ),
+                if (puedeEditar && onEditar != null)
+                  IconButton(
+                      icon: const Icon(Icons.edit_outlined),
+                      onPressed: onEditar),
+                if (puedeEliminar && onEliminar != null)
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                    onPressed: onEliminar,
+                  ),
+              ],
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
