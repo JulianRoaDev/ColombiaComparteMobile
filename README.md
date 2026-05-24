@@ -117,8 +117,6 @@ flutter pub get
 flutter run
 ```
 
-> Asegúrate de que el backend esté corriendo y que la URL base en `Mobile/lib/core/constants/app_constants.dart` apunte al servidor correcto.
-
 ---
 
 ## ✅ Endpoints principales del backend
@@ -146,15 +144,3 @@ Se reforzó la actualización de perfil para que:
 - muestre la inicial del nombre si no hay imagen disponible
 
 ---
-
-## 📌 Recomendaciones
-
-- Verifica siempre las URLs de las imágenes del perfil.
-- Usa un servicio público o CDN para alojar fotos si necesitas cargar imágenes externas.
-- Comprueba las variables de entorno antes de iniciar el servidor.
-
----
-
-## 📬 Contacto
-
-Este README es una guía rápida para entender, ejecutar y extender el proyecto. Si deseas documentar funciones adicionales o crear un despliegue, agrega secciones nuevas a este mismo archivo.
