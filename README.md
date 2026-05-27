@@ -1,80 +1,44 @@
 # Latinoamérica Comparte
 
-## 🌎 Proyecto Full Stack
+## 🌎 Resumen rápido
 
-Este repositorio contiene la aplicación **Latinoamérica Comparte**, con:
+Latinoamérica Comparte es una plataforma para que administradores y editores gestionen contenido (noticias, testimonios y solicitudes) desde una API en Node.js/TypeScript y una app móvil en Flutter.
 
-- `Backend/`: API REST en **Node.js + Express + TypeScript** con persistencia en **MongoDB**.
-- `Mobile/`: aplicación móvil de administración construida en **Flutter**.
-
----
-
-## 🚀 Descripción
-
-Latinoamérica Comparte es una plataforma de administración de contenido donde los usuarios pueden iniciar sesión, actualizar su perfil y gestionar recursos como noticias, testimonios y solicitudes. El backend brinda autenticación JWT y endpoints para operaciones CRUD, mientras que la app móvil ofrece un panel de control para administradores y editores.
+Este README resume cómo poner en marcha el backend y la app móvil, cómo usar los endpoints principales y dónde mirar si algo falla.
 
 ---
 
-## 🧩 Tecnologías usadas
+## 🚀 Qué hay en este repositorio
 
-### Backend
-
-- Node.js
-- Express
-- TypeScript
-- MongoDB / Mongoose
-- JWT para autenticación
-- bcryptjs para hash de contraseñas
-- dotenv para configuración de entorno
-- CORS
-
-### Mobile
-
-- Flutter
-- Dart
-- Provider para estado
-- Dio para llamadas HTTP
-- flutter_secure_storage para token seguro
-- go_router para navegación
+- `Backend/`: API REST con Express + TypeScript y MongoDB (Mongoose). Revisa los scripts de npm en [Backend/package.json](Backend/package.json#L1-L200).
+- `Mobile/`: app de administración construida con Flutter.
 
 ---
 
-## 📁 Estructura del proyecto
+## 🧭 Rápida descripción técnica
 
-### Backend/
-
-- `src/server.ts`: archivo principal que inicia el servidor.
-- `src/config/db.ts`: configuración de conexión MongoDB.
-- `src/controllers/`: lógica de controladores para auth, usuarios, noticias, testimonios, paises y solicitudes.
-- `src/routes/`: rutas de Express.
-- `src/models/`: esquemas de MongoDB.
-- `src/middleware/auth.ts`: verificación de JWT.
-- `src/seed/seed.ts`: script para cargar datos iniciales.
-- `src/types/express.t.ts`: tipos adicionales para Express.
-
-### Mobile/
-
-- `lib/main.dart`: punto de entrada de Flutter.
-- `lib/core/`: configuración de red y constantes.
-- `lib/features/auth/`: modelo, servicios, provider y pantallas de autenticación.
-- `lib/features/perfil/`: pantalla de perfil personal.
-- `lib/shared/`: widgets compartidos como drawer y confirm dialog.
-- `lib/router/`: configuración de rutas con `go_router`.
+- Backend: Node.js, Express, TypeScript, Mongoose. Autenticación con JWT y hash de contraseñas con `bcryptjs`.
+- Mobile: Flutter (Dart), `dio` para HTTP, `flutter_secure_storage` para guardar el JWT.
 
 ---
 
-## ⚙️ Configuración y ejecución
+**Estructura importante**
 
-### Backend
+- Backend principal: [Backend/src/server.ts](Backend/src/server.ts#L1-L200)
+- Script de seed: `npm run seed` (ejecutar desde `Backend/`)
 
-1. Instalar dependencias:
+---
+
+## ⚙️ Backend — Inicio rápido
+
+1. Instala dependencias:
 
 ```bash
 cd Backend
 npm install
 ```
 
-2. Configurar variables de entorno en `.env` (debe existir en `Backend/`):
+2. Crea un archivo `.env` en la carpeta `Backend/` con al menos estas variables:
 
 ```env
 PORT=4000
@@ -83,64 +47,102 @@ JWT_SECRET=tu_secreto_aqui
 JWT_EXPIRES_IN=24h
 ```
 
-3. Ejecutar en modo desarrollo:
+3. En desarrollo (recarga automática usando `tsx`):
 
 ```bash
 npm run dev
 ```
 
-4. Compilar y ejecutar en producción:
+4. Para producción:
 
 ```bash
 npm run build
 npm start
 ```
 
-5. Cargar datos de ejemplo:
+5. Para cargar datos de ejemplo (seed):
 
 ```bash
 npm run seed
 ```
 
-### Mobile
+Notas:
+- Los scripts disponibles están en [Backend/package.json](Backend/package.json#L1-L200).
+- Si la conexión a Mongo falla, revisa `MONGO_URI` y que MongoDB esté corriendo en la máquina o en un servicio accesible.
 
-1. Instalar dependencias de Flutter:
+---
+
+## 🔐 Autenticación
+
+- El backend utiliza JWT. Al iniciar sesión obtendrás un token que debes enviar en el header `Authorization: Bearer <token>` para rutas protegidas.
+- Cuando actualices el perfil, el backend emite un nuevo token: guarda el token actualizado en el cliente.
+
+---
+
+## 🧾 Endpoints principales (resumen)
+
+Estos son los endpoints más usados por la app móvil. Rutas base: `/auth`, `/usuarios`, `/noticias`, `/testimonios`, `/paises`, `/solicitudes`, `/dashboard`.
+
+- `POST /auth/login` — Inicia sesión. Body: `{ email, password }`. Respuesta: `{ user, token }`.
+- `POST /auth/register` — Crear usuario. Body: `{ nombre, email, password, rol? }`.
+- `PATCH /auth/perfil` — Actualizar perfil (protegida). Enviar `Authorization` y body con campos a actualizar.
+
+Ejemplo rápido con `curl` (login):
+
+```bash
+curl -X POST http://localhost:4000/auth/login \
+	-H "Content-Type: application/json" \
+	-d '{"email":"admin@example.com","password":"tu_pass"}'
+```
+
+Para más endpoints y detalles, abre los controladores en `Backend/src/controllers/`.
+
+---
+
+## 📱 Mobile — Inicio rápido
+
+1. Instala dependencias y ejecuta desde `Mobile/`:
 
 ```bash
 cd Mobile
 flutter pub get
-```
-
-2. Ejecutar la app:
-
-```bash
 flutter run
 ```
 
----
-
-## ✅ Endpoints principales del backend
-
-- `POST /auth/login`: login de usuario.
-- `POST /auth/register`: registro de usuario.
-- `PATCH /auth/perfil`: actualizar perfil del usuario autenticado.
-- `POST /auth/perfil`: ruta compatible para actualización de perfil.
+2. Configuración en la app:
+- La app espera consumir la API del backend. Asegúrate de apuntar `baseUrl` al host donde corre el backend (revisa `lib/core` en la app).
+- El token JWT se guarda en `flutter_secure_storage`.
 
 ---
 
-## 🧠 Notas importantes
+## 🧪 Seed y datos de prueba
 
-- El backend genera un nuevo token al actualizar el perfil, de modo que el frontend debe guardar nuevamente el JWT.
-- La app móvil maneja la imagen de perfil como URL pública. Si la URL es inválida, se muestra la inicial del nombre.
+- Para poblar la DB con datos de ejemplo: desde `Backend/` ejecuta `npm run seed`.
+- El seed crea usuarios, países y ejemplos de noticias/testimonios para probar la app.
 
 ---
 
-## ✨ Mejora reciente
+## 🛠️ Sugerencias de troubleshooting
 
-Se reforzó la actualización de perfil para que:
+- Error de conexión a MongoDB: verifica `MONGO_URI` y que el servicio esté en ejecución.
+- Error 401 en rutas protegidas: revisa que el token JWT se envíe como `Authorization: Bearer <token>`.
+- Problemas con la imagen de perfil: la app usa URLs públicas; si no carga, muestra la inicial del nombre.
 
-- acepte la imagen de perfil como URL válida `http` / `https`
-- soporte fallback visual cuando la imagen no carga
-- muestre la inicial del nombre si no hay imagen disponible
+---
+
+## 🤝 Cómo contribuir
+
+- Si quieres contribuir, haz un fork, crea una rama con tu feature/bugfix y abre un PR describiendo los cambios.
+- Añade tests cuando sea posible y documenta cualquier cambio en las APIs.
+
+---
+
+## 📬 Contacto
+
+Si necesitas ayuda para poner todo en marcha o quieres que ajuste la API para el frontend, dime y lo revisamos juntos.
+
+---
+
+*Este README fue escrito para ser directo y práctico — si quieres que lo traduzca a inglés, lo reduzca o lo amplíe con ejemplos completos de peticiones, dímelo y lo hago.*
 
 ---
