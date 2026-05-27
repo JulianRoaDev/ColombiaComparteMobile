@@ -453,7 +453,7 @@ class _AccesoRapido extends StatelessWidget {
     final items = [
       if (rol == 'superadmin')
         const _AccesoItem(
-            Icons.flag_outlined, 'Países', '/paises', Colors.teal),
+            Icons.flag_outlined, 'Países', '/paises', const Color(0xFF9D4EDD)),
       if (rol != 'editor')
         const _AccesoItem(
             Icons.inbox_outlined, 'Solicitudes', '/solicitudes', Colors.orange),
@@ -462,7 +462,7 @@ class _AccesoRapido extends StatelessWidget {
       const _AccesoItem(
           Icons.article_outlined, 'Noticias', '/noticias', Colors.blue),
       const _AccesoItem(
-          Icons.person_outline, 'Mi perfil', '/perfil', Colors.purple),
+          Icons.person_outline, 'Mi perfil', '/perfil', const Color(0xFF7B2CBF)),
     ];
 
     return Column(

@@ -5,6 +5,7 @@ import '../../features/auth/providers/auth_provider.dart';
 import '../../features/dashboard/providers/dashboard_provider.dart';
 import '../../features/theme/theme_provider.dart';
 import 'confirm_dialog.dart';
+import 'avatar_widget.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -27,14 +28,10 @@ class AppDrawer extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
+              AvatarWidget(
+                fotoUrl: user.fotoUrl,
+                nombre: user.nombre,
                 radius: 28,
-                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                child: Icon(
-                  Icons.person,
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                  size: 32,
-                ),
               ),
               const SizedBox(height: 12),
               Text(user.nombre,

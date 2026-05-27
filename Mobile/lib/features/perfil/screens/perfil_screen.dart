@@ -4,6 +4,7 @@ import '../../auth/models/user_model.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../shared/widgets/app_drawer.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
+import '../../../shared/widgets/avatar_widget.dart';
 import '../../dashboard/providers/dashboard_provider.dart';
 
 class PerfilScreen extends StatefulWidget {

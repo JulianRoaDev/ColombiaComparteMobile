@@ -1,5 +1,5 @@
 class AppConstants {
-  static const String baseUrl = 'http://192.168.20.25:3000';
+  static const String baseUrl = 'http://localhost:3000';
 
   // Claves para flutter_secure_storage
   static const String tokenKey   = 'jwt_token';

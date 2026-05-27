@@ -8,7 +8,7 @@ const buildPayload = (usuario: any) => ({
   id:            usuario._id.toString(),
   nombre:        usuario.nombre,
   correo:        usuario.correo,
-  foto_url:      usuario.foto_url ?? null,   // ← siempre incluido
+  foto_url:      usuario.foto_url ?? null,
   rol:           usuario.rol,
   pais_asignado: usuario.pais_asignado ?? null
 });

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../models/usuario_admin_model.dart';
+import '../../../shared/widgets/avatar_widget.dart';
 import '../providers/usuarios_provider.dart';
 import '../../../shared/widgets/app_drawer.dart';
 import '../../../shared/widgets/confirm_dialog.dart';
@@ -24,21 +25,26 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
 
   String _rolLabel(String rol) {
     const map = {
-      'superadmin':     'Super Admin',
-      'admin_pais':     'Admin País',
-      'editor':         'Editor',
-      'usuario_general':'Usuario General',
+      'superadmin': 'Super Admin',
+      'admin_pais': 'Admin País',
+      'editor': 'Editor',
+      'usuario_general': 'Usuario General',
     };
     return map[rol] ?? rol;
   }
 
   Color _rolColor(String rol) {
     switch (rol) {
-      case 'superadmin':     return Colors.deepPurple;
-      case 'admin_pais':     return Colors.blue;
-      case 'editor':         return Colors.teal;
-      case 'usuario_general':return Colors.orange;
-      default:               return Colors.grey;
+      case 'superadmin':
+        return Colors.deepPurple;
+      case 'admin_pais':
+        return Colors.blue;
+      case 'editor':
+        return Colors.teal;
+      case 'usuario_general':
+        return Colors.orange;
+      default:
+        return Colors.grey;
     }
   }
 
@@ -75,13 +81,22 @@ class _UsuariosScreenState extends State<UsuariosScreen> {
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
                   child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: color.withOpacity(0.15),
-                      child: Text(
-                        u.nombre.isNotEmpty ? u.nombre[0].toUpperCase() : '?',
-                        style: TextStyle(color: color, fontWeight: FontWeight.bold),
-                      ),
-                    ),
+                    leading: u.fotoUrl != null && u.fotoUrl!.isNotEmpty
+                        ? AvatarWidget(
+                            fotoUrl: u.fotoUrl,
+                            nombre: u.nombre,
+                            radius: 24,
+                          )
+                        : CircleAvatar(
+                            backgroundColor: color.withOpacity(0.15),
+                            child: Text(
+                              u.nombre.isNotEmpty
+                                  ? u.nombre[0].toUpperCase()
+                                  : '?',
+                              style: TextStyle(
+                                  color: color, fontWeight: FontWeight.bold),
+                            ),
+                          ),
                     title: Text(u.nombre,
                         style: const TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Column(

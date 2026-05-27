@@ -5,6 +5,7 @@ class UsuarioAdminModel {
   final String    nombre;
   final String    correo;
   final String    rol;
+  final String?   fotoUrl;
   final PaisModel? paisAsignado;
 
   UsuarioAdminModel({
@@ -12,6 +13,7 @@ class UsuarioAdminModel {
     required this.nombre,
     required this.correo,
     required this.rol,
+    this.fotoUrl,
     this.paisAsignado,
   });
 
@@ -21,6 +23,7 @@ class UsuarioAdminModel {
       nombre: json['nombre'] ?? '',
       correo: json['correo'] ?? '',
       rol:    json['rol']    ?? '',
+      fotoUrl: json['foto_url']?.toString(),
       paisAsignado: json['pais_asignado'] != null
           ? PaisModel.fromJson(json['pais_asignado'] as Map<String, dynamic>)
           : null,
